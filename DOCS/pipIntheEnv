@@ -1,0 +1,1 @@
+& C:\ProgramData\anaconda3\envs\bu_env\python.exe -m pip install langchain-community langchain-openai langgraph tavily-python

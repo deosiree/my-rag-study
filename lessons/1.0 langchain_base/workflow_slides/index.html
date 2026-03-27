@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>第一个 LangGraph 状态机 — 幻灯片导读</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/sky.css" />
+  <style>
+    .reveal pre.code { width: 100%; font-size: 0.45em; text-align: left; box-shadow: none; }
+    .reveal .hint { font-size: 0.75em; color: #444; margin-top: 1em; }
+    .reveal section .mermaid { margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <section>
+        <h2>第一个 LangGraph 状态机</h2>
+        <p>用「幻灯片」对照 <code>firstAgent.py</code> 里的代码，一步一步学。</p>
+        <p class="hint"><strong>如何打开：</strong>在本目录执行 <code>python -m http.server 8765</code>，浏览器访问 <code>http://127.0.0.1:8765/</code>（直接双击文件有时 Mermaid 不渲染）。</p>
+      </section>
+
+      <section>
+        <h3>学习路线（建议顺序）</h3>
+        <ol style="text-align:left;font-size:0.85em;">
+          <li><strong>State</strong>：整次运行共享的一份字典长什么样</li>
+          <li><strong>节点</strong>：函数怎么读 state、返回什么</li>
+          <li><strong>普通边</strong>：<code>add_edge</code> 固定顺序</li>
+          <li><strong>条件边</strong>：<code>add_conditional_edges</code> 做分支</li>
+          <li><strong>合流</strong>：两条分支都回到同一个节点</li>
+        </ol>
+      </section>
+
+      <section>
+        <h3>① State（状态）</h3>
+        <p>用 <code>TypedDict</code> 描述「图里流转的数据结构」。</p>
+        <pre class="code"><code data-trim class="language-python">
+class State(TypedDict):
+    topic: str
+    body: NotRequired[str]
+    result: NotRequired[str]
+        </code></pre>
+        <p class="hint"><code>invoke({"topic": "..."})</code> 时只需给出必填字段；后面节点会往同一 dict 里<strong>合并</strong> <code>body</code>、<code>result</code>。</p>
+      </section>
+
+      <section>
+        <h3>② 节点函数</h3>
+        <p>每个节点：<strong>输入完整 state</strong>，<strong>返回要更新的键值</strong>（局部 dict）。</p>
+        <pre class="code"><code data-trim class="language-python">
+def node_pick_topic(state: State) -> dict:
+    t = state["topic"].strip()
+    return {"topic": t}
+        </code></pre>
+        <p class="hint">不要改 state 本体，只 <code>return {...}</code>；LangGraph 负责合并。</p>
+      </section>
+
+      <section>
+        <h3>③ 普通边（顺序固定）</h3>
+        <pre class="code"><code data-trim class="language-python">
+g.add_edge(START, "pick_topic")
+g.add_edge("as_question", "summary")
+g.add_edge("as_fact", "summary")
+g.add_edge("summary", END)
+        </code></pre>
+        <p class="hint"><code>START</code> / <code>END</code> 是图的入口和出口。</p>
+      </section>
+
+      <section>
+        <h3>④ 条件边（状态机分支）</h3>
+        <p>路由函数返回值必须是「分支名字」，且与第三个 dict 的 key 一致。</p>
+        <pre class="code"><code data-trim class="language-python">
+def route_by_question(state: State) -> Literal["as_question", "as_fact"]:
+    return "as_question" if "?" in state["topic"] else "as_fact"
+
+g.add_conditional_edges(
+    "pick_topic",
+    route_by_question,
+    {"as_question": "as_question", "as_fact": "as_fact"},
+)
+        </code></pre>
+      </section>
+
+      <section>
+        <h3>⑤ 合流</h3>
+        <p><code>as_question</code> 与 <code>as_fact</code> 都连到 <code>summary</code>：两条路径最后<strong>汇合</strong>，再结束。</p>
+        <p class="hint">虚线边表示「条件跳转」；实线表示确定跳转（与 LangGraph 导出一致）。</p>
+      </section>
+
+      <section>
+        <h3>与代码一致的流程图</h3>
+        <p style="font-size:0.6em;">若你改了节点名，运行：<code>python firstAgent.py --write-mermaid workflow_slides/graph.mmd</code>，再把 <code>graph.mmd</code> 贴进下面这一块（或改 <code>index.html</code> 里同名区域）。</p>
+        <div class="mermaid" style="font-size:0.42em;">graph TD;
+	__start__([<p>__start__</p>]):::first
+	pick_topic(pick_topic)
+	as_question(as_question)
+	as_fact(as_fact)
+	summary(summary)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> pick_topic;
+	as_fact --> summary;
+	as_question --> summary;
+	pick_topic -.-> as_fact;
+	pick_topic -.-> as_question;
+	summary --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc</div>
+      </section>
+
+      <section>
+        <h3>动手 1：改分支规则</h3>
+        <p>打开 <code>firstAgent.py</code>，改 <code>route_by_question</code>：例如用关键词「吗」、或 <code>len(state["topic"])</code> 决定走哪条边。</p>
+        <p class="hint">保存后运行 <code>python firstAgent.py</code> 看两次 <code>invoke</code> 的输出是否变化。</p>
+      </section>
+
+      <section>
+        <h3>动手 2：加一个节点</h3>
+        <p>在 <code>summary</code> 前插入 <code>log_step</code>：只往 state 里写一个时间戳或计数。</p>
+        <p class="hint">记得 <code>add_node</code>，并把两条分支的边改成先指向新节点，再由新节点连到 <code>summary</code>。</p>
+      </section>
+
+      <section>
+        <h3>常用命令</h3>
+        <ul style="font-size:0.8em;text-align:left;">
+          <li><code>python firstAgent.py</code> — 跑两条示例</li>
+          <li><code>python firstAgent.py --mermaid</code> — 终端打印图</li>
+          <li><code>python firstAgent.py --write-mermaid workflow_slides/graph.mmd</code> — 更新流程图文件</li>
+        </ul>
+        <p class="hint">下一步可把某个节点里的字符串改成调用 <code>ChatOpenAI</code> / 千问兼容客户端，就变成「真 Agent」了。</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "loose" });
+    function runMermaidOnVisibleSlide() {
+      var slide = Reveal.getCurrentSlide();
+      if (!slide) return;
+      slide.querySelectorAll("div.mermaid").forEach(function (el) {
+        if (el.getAttribute("data-mermaid-done")) return;
+        el.setAttribute("data-mermaid-done", "1");
+        try {
+          mermaid.run({ nodes: [el] });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+    Reveal.initialize({
+      hash: true,
+      slideNumber: "c/t",
+      transition: "slide",
+    }).then(function () {
+      runMermaidOnVisibleSlide();
+    });
+    Reveal.on("slidechanged", runMermaidOnVisibleSlide);
+  </script>
+</body>
+</html>
