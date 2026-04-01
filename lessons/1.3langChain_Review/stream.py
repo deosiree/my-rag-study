@@ -1,6 +1,8 @@
+# %%
 import os
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
+from langchain.tools import tool
 from dotenv import load_dotenv
 load_dotenv() # 这一行会把 .env 的值加载到 os.environ
 
@@ -11,6 +13,7 @@ llm = ChatOpenAI(
     model=os.environ.get("CUSTOM_MODEL_NAME") # 确保这里是 deepseek-chat 或相关名称
 )
 
+@tool
 def get_weather(location: str):
     """Call to get the current weather."""
     if location.lower() in ["sf", "san francisco"]:
@@ -25,6 +28,10 @@ agent = create_agent(
     tools=[get_weather],
 )
 
+# 🎨 可视化图结构
+from IPython.display import Image, display
+display(Image(agent.get_graph().draw_mermaid_png()))
+
 # 3. 运行流式输出
 print("流式输出1：", end="")
 for chunk in llm.stream("请写一首关于 AI 的小诗（简短）"):
@@ -34,3 +41,4 @@ print("流式输出2：", end="")
 for chunk in llm.stream("请查询今日的天气情况（简短）"):
     print(chunk.content, end="", flush=True)
 print()
+# %%
