@@ -365,3 +365,146 @@ your_project/
 - Day7：补评测集、指标与审查文档
 
 ---
+
+## 11. 与你当前项目结构对齐的落地实施（按文件引导）
+
+你现在已经有这些骨架文件：
+- `src/graph/state.py`
+- `src/graph/router.py`
+- `src/graph/builder.py`
+- `src/services/session_memory.py`
+- `src/services/faq_store.py`
+- `src/services/kb_store.py`
+
+下面按“先跑通主干，再补能力”的顺序做，不需要一次写完。
+
+### 11.1 第一步：先让主干可跑（只走人工路径）
+
+目标：从输入到路由再到输出先闭环，哪怕暂时都转人工也可以。
+
+你要做的事：
+- 在 `src/graph/state.py` 定义最小状态字段（只保留必要字段）：
+  - `session_id`
+  - `user_input`
+  - `intent`
+  - `confidence`
+  - `risk_level`
+  - `route`
+  - `route_reason`
+  - `handoff_flag`
+  - `final_answer`
+- 在 `src/graph/router.py` 先写一个最简单决策：
+  - 默认 `route = "human"`
+  - `route_reason = "bootstrap_default_human"`
+- 在 `src/graph/builder.py` 只保留最少节点：
+  - `intent_classifier`（可先 mock 固定输出）
+  - `route_decision`
+  - `human_handoff`
+  - `response`
+
+完成标准：
+- 输入任意一句话，系统都能稳定输出人工转接结果；
+- `route_reason` 能看到决策原因；
+- 没有死循环。
+
+### 11.2 第二步：接 FAQ 路径（第一个自动化路径）
+
+目标：让高频标准问答可以自动返回。
+
+你要做的事：
+- 在 `src/services/faq_store.py` 先用本地字典或 `json` 文件管理 FAQ；
+- 定义 FAQ 命中输出（建议）：
+  - `faq_hit`（是否命中）
+  - `faq_id`
+  - `faq_score`
+  - `faq_answer`
+- 在 `src/graph/router.py` 加 FAQ 分支判定：
+  - `intent == faq_consult`
+  - `confidence` 超阈值
+  - `faq_score` 超阈值
+  - `risk_level != high`
+- 在 `src/graph/builder.py` 增加 `faq_responder` 节点和对应条件边。
+
+完成标准：
+- 你准备的 FAQ 样例能稳定命中；
+- FAQ 未命中时不会强答，会继续去 KB 或人工。
+
+### 11.3 第三步：接 KB 路径（可解释回答）
+
+目标：FAQ 不命中时，能根据本地文档给出“有依据”的答复。
+
+你要做的事：
+- 在 `src/services/kb_store.py` 先做本地文档读取与简单检索（关键词或粗糙相似度即可）；
+- 检索结果统一成结构：
+  - `retrieved_docs`（每条含文档名、片段、score）
+  - `kb_score`
+- 在 `src/graph/builder.py` 增加 `kb_retriever`、`answer_composer` 节点；
+- 在 `src/graph/router.py` 增加 KB 路由条件（FAQ 未命中 + 有检索证据）。
+
+完成标准：
+- 至少 3 条复杂问题能返回带依据的回答；
+- 无证据时不输出“拍脑袋答案”。
+
+### 11.4 第四步：接本地 memory（会话连续性）
+
+目标：支持多轮上下文，降低重复提问。
+
+你要做的事：
+- 在 `src/services/session_memory.py` 用 `dict[session_id]` 保存：
+  - 最近多轮对话
+  - 上次路由结果
+  - 当前 `clarify_count`、`fallback_count`
+- 每轮结束写一条简化 `trace` 到本地日志文件（可按天分文件）；
+- 在 `state` 里增加 `conversation_history` 字段（或引用 memory 内容）。
+
+完成标准：
+- 第二轮提“还是刚才那个订单”时系统能识别上下文；
+- 能追溯某次为什么转了人工。
+
+### 11.5 第五步：补 Clarify 与 Quality Gate（稳定性）
+
+目标：低置信度先澄清，回答前先过质量闸门。
+
+你要做的事：
+- 在路由中加入 `clarify` 分支：
+  - 置信度低
+  - 缺少关键实体（订单号等）
+- 设置澄清上限（例如 `clarify_count >= 2` 转人工）；
+- 增加质量闸门判断：
+  - 是否与意图一致
+  - 是否有依据
+  - 是否高风险
+
+完成标准：
+- 低置信问题会先追问，而不是乱答；
+- 澄清不会无限循环；
+- 闸门不通过时能安全转人工。
+
+### 11.6 第六步：再考虑 Web Search（可选增强）
+
+目标：只在 FAQ 和 KB 都不足时，用外部信息补齐答案。
+
+你要做的事：
+- 在 `src/graph/builder.py` 增加可选的 `web_search_retriever` 节点；
+- 在 `router.py` 严格限制触发条件：
+  - FAQ 未命中
+  - KB 证据不足
+  - 问题属于“需要最新公开信息”
+- 对高风险场景禁用 Web Search，直接人工。
+
+完成标准：
+- 能解释“为什么触发了 web search”；
+- 回答附外部来源，并保留抓取时间；
+- 不影响原有四路径稳定性。
+
+---
+
+## 12. 每一步都能复盘的自检清单（开发当天就能用）
+
+- 我新增的状态字段是否都在 `state` 有定义？
+- 我新增的路由分支是否在 `builder` 中有对应条件边？
+- 每个分支失败时是否都有回退路径（通常回退到人工）？
+- 每轮是否记录了 `route` + `route_reason`？
+- 这一步是否能用 3-5 条样例独立验证？
+
+如果以上 5 条都满足，再进入下一步，能显著降低后续重构成本。
