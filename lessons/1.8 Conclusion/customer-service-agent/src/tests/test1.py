@@ -17,15 +17,17 @@ while True:
     # try:
     #     user = input("User (q/Q to quit): ")
     # except:
-    user = cached_human_responses[cached_response_index]
+    user_content = cached_human_responses[cached_response_index]
     cached_response_index += 1
-    print(f"User (q/Q to quit): {user}")
-    if user in {"q", "Q"}:
+    print(f"User (q/Q to quit): {user_content}")
+    if user_content in {"q", "Q"}:
         print("AI: Byebye")
         break
     output = None
     for output in app.stream(
-        {"messages": [HumanMessage(content=user)]}, config=config, stream_mode="updates"
+        {"messages": [HumanMessage(content=user_content)]}, 
+        config=config, 
+        stream_mode="updates"
     ):
         print(output)
         # last_message = next(iter(output.values()))["messages"][-1]

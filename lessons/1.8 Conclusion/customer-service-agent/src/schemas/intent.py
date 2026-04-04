@@ -12,7 +12,7 @@ class IntentSchema(BaseModel):
     sentiment: str = Field(description="用户情绪：积极、中性、愤怒")
     
     # 最终输出
-    intent_label: Literal['FAQ', 'KB', 'Human', 'Chitchat'] = Field(description="标准意图标签")
+    intent_label: Literal['FAQ', 'KB', 'Human', 'Chitchat', 'Clarify'] = Field(description="标准意图标签")
     confidence: float = Field(description="置信度 0-1")
     entities: EntitySlots = Field(default_factory=dict, description="提取到的实体槽位")# `['order_id', 'product_id', 'user_id']`
     is_ambiguous: bool = Field(description="是否歧义")

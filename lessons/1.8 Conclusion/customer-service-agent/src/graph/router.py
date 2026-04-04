@@ -13,11 +13,20 @@ from graph.state import CustomerServiceState
 def router_intent(state: CustomerServiceState) -> str:
     '''
     description: 路由决策函数，根据意图识别的置信度和歧义情况，决定去向
-    return {str}: 路由决策
+    params:
+        state: CustomerServiceState
+            messages: list[BaseMessage]
+            intent_data: Optional[IntentSchema]
+            confidence: float
+            is_ambiguous: bool
+            intent_label: Literal['FAQ', 'KB', 'Human', 'Chitchat', 'Clarify']
+            next_step: str
+    returns:
+        str: 路由决策
     '''
     intent = state["intent_data"]
     if intent is None:
-        return "human"# 意图识别失败，去人工
+        return "Human"# 意图识别失败，去人工
     if isinstance(intent, dict):
         confidence = intent.get("confidence", 0.0)
         is_ambiguous = intent.get("is_ambiguous", True)
@@ -28,8 +37,8 @@ def router_intent(state: CustomerServiceState) -> str:
         intent_label = intent.intent_label
     if confidence < 0.7:
         if is_ambiguous:
-            return "clarify"# 歧义，去澄清
+            return "Clarify"# 歧义，去澄清
         else:
-            return "human"# 置信度低，去人工
+            return "Human"# 置信度低，去人工
     else:
         return intent_label# 置信度高，去对应的业务节点
