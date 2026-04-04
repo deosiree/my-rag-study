@@ -10,7 +10,7 @@ import uuid
 
 # 6.Use the graph
 
-cached_human_responses = ["你好", "计算111+111", "天空是什么颜色的", "你使用了什么模型？", "q"]
+cached_human_responses = ["你好吗？能写个自我介绍吗？", "111+111是多少？使用工具进行计算", "我真是服了你了，你能不能不要那么笨啊，重新执行上次任务！", "你使用了什么模型？", "q"]
 cached_response_index = 0
 config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 while True:

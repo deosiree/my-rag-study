@@ -26,23 +26,25 @@ def build_graph():
     graph = StateGraph(CustomerServiceState)
     graph.add_node("intent_analyzer", intent_analyzer_node)
     graph.add_edge(START, "intent_analyzer")
-    graph.add_node("rag", rag_node)
-    graph.add_node("chitchat", chitchat_node)
-    graph.add_node("faq", faq_node)
-    graph.add_node("human", human_node)
-    graph.add_node("clarify", clarify_node)
-    graph.add_conditional_edges(
-        "intent_analyzer",
-        router_intent,
-        {
-            "rag": "rag",# RAG节点
-            "chitchat": "chitchat",# 闲聊节点
-            "faq": "faq",# FAQ节点
-            "human": "human",# 人工节点
-            "clarify": "clarify",# 澄清节点
-        },
-    )
-    graph.add_edge("rag", END)
-    graph.add_edge("chitchat", END)
-    graph.add_edge("faq", END)
+    graph.add_edge("intent_analyzer", END)
+
+    # graph.add_node("rag", rag_node)
+    # graph.add_node("chitchat", chitchat_node)
+    # graph.add_node("faq", faq_node)
+    # graph.add_node("human", human_node)
+    # graph.add_node("clarify", clarify_node)
+    # graph.add_conditional_edges(
+    #     "intent_analyzer",
+    #     router_intent,
+    #     {
+    #         "rag": "rag",# RAG节点
+    #         "chitchat": "chitchat",# 闲聊节点
+    #         "faq": "faq",# FAQ节点
+    #         "human": "human",# 人工节点
+    #         "clarify": "clarify",# 澄清节点
+    #     },
+    # )
+    # graph.add_edge("rag", END)
+    # graph.add_edge("chitchat", END)
+    # graph.add_edge("faq", END)
     return graph.compile()# 编译图

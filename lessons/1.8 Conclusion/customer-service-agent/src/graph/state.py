@@ -18,11 +18,11 @@ from schemas.intent import IntentSchema
 
 class CustomerServiceState(TypedDict):
     # 基础：对话历史（包含原始输入）
-    messages: Annotated[list, add_messages]
+    messages: Annotated[list, add_messages]# add_messages 会确保新产生的 AIMessage 被追加到列表末尾
     
     # 核心：意图识别的结构化输出
     # 我们直接定义一个 Pydantic 模型作为“意图结果”
-    intent_data: Optional[IntentSchema] 
+    intent_data: Optional[IntentSchema] # 存储结构化分析结果
     
     # 决策：用于条件边（Routing）的简易字段
     next_step: str 
