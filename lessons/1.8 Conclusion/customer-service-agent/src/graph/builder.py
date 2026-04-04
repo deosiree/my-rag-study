@@ -29,25 +29,25 @@ def build_graph():
     # graph.add_edge("intent_analyzer", END)
 
     # intent_label: Literal['FAQ', 'KB', 'Human', 'Chitchat', 'Clarify']
-    graph.add_node("KB", rag_node)
-    graph.add_node("Chitchat", chitchat_node)
-    graph.add_node("FAQ", faq_node)
-    graph.add_node("Human", human_node)
-    graph.add_node("Clarify", clarify_node)
+    graph.add_node("rag", rag_node)
+    graph.add_node("chitchat", chitchat_node)
+    graph.add_node("faq", faq_node)
+    graph.add_node("human", human_node)
+    graph.add_node("clarify", clarify_node)
     graph.add_conditional_edges(
         "intent_analyzer",
         router_intent,
         {
-            "KB": "KB",# 知识库节点-RAG
-            "Chitchat": "Chitchat",# 闲聊节点-Chitchat
-            "FAQ": "FAQ",# FAQ节点-FAQ
-            "Human": "Human",# 人工节点-Human
-            "Clarify": "Clarify",# 澄清节点-Clarify
+            "KB": "rag",# 知识库节点-RAG
+            "Chitchat": "chitchat",# 闲聊节点-Chitchat
+            "FAQ": "faq",# FAQ节点-FAQ
+            "Human": "human",# 人工节点-Human
+            "Clarify": "clarify",# 澄清节点-Clarify
         },
     )
-    graph.add_edge("KB", END)
-    graph.add_edge("Chitchat", END)
-    graph.add_edge("FAQ", END)
-    graph.add_edge("Human", END)
-    graph.add_edge("Clarify", END)
+    graph.add_edge("rag", END)
+    graph.add_edge("chitchat", END)
+    graph.add_edge("faq", END)
+    graph.add_edge("human", END)
+    graph.add_edge("clarify", END)
     return graph.compile()# 编译图
