@@ -23,18 +23,12 @@ while True:
     if user_content in {"q", "Q"}:
         print("AI: Byebye")
         break
-    output = None
-    for output in app.stream(
-        {"messages": [HumanMessage(content=user_content)]}, 
-        config=config, 
-        stream_mode="updates"
-    ):
-        print(output)
-        # last_message = next(iter(output.values()))["messages"][-1]
-        # last_message.pretty_print()
-
-    if output and "prompt" in output:
-        print("Done!")
+    output =  app.invoke(
+        {"messages": [HumanMessage(content=user_content)]},
+        config=config,
+        stream_mode="values",
+    )
+    output["messages"][-1].pretty_print()
 
 
 
