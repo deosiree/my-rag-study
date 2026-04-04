@@ -35,6 +35,29 @@ cd "path\to\my-rag-study\lessons\1.8 Conclusion\customer-service-agent"
 pip install -e .
 ```
 
+### 常见错误：在仓库根目录执行 `pip install -e .`
+
+若在 **`my-rag-study` 仓库根目录**（仅有 `README.md`、`requirements.txt` 等、**没有** `pyproject.toml`）下执行 `pip install -e .`，pip 会报错类似：
+
+```text
+ERROR: file:///.../my-rag-study does not appear to be a Python project:
+neither 'setup.py' nor 'pyproject.toml' found.
+```
+
+**原因**：可编辑安装所指的目录必须是**含有 `pyproject.toml` 的项目根**。本示例的配置文件在本目录 `customer-service-agent` 下，不在上一级仓库根目录。
+
+**做法**：先 `cd` 到本 README 所在目录（即 `lessons\1.8 Conclusion\customer-service-agent`）再执行 `pip install -e .`，或使用上一节及下文中的**绝对路径**指向该目录。
+
+---
+
+**必须与运行脚本时用的是同一个 Python/venv。** `pip` 会装到「当前这条 `pip` 所属的环境」里；若你在系统 Python 里执行过 `pip install -e .`，而 Cursor / 终端实际用 `bu_env\Scripts\python.exe` 跑 `test1.py`，则该 venv 里仍然没有本包，仍会 `No module named 'graph'`。建议在项目根目录用**目标解释器**显式安装一次：
+
+```powershell
+path\to\my-rag-study\bu_env\Scripts\python.exe -m pip install -e "path\to\my-rag-study\lessons\1.8 Conclusion\customer-service-agent"
+```
+
+`src/tests/test1.py` 开头已加入将 `src` 写入 `sys.path` 的代码，即使未做可编辑安装，直接运行该脚本通常也能找到 `graph`；可编辑安装仍是推荐做法，便于在其他入口文件中 `import graph`。
+
 ### `pyproject.toml` 是做什么的？
 
 它声明本项目如何用 setuptools 打包/安装（`build-system`、`package-dir`、`packages.find` 等）。**可编辑安装依赖这份配置**；仅有 `__init__.py` 只能说明 `src` 里是 Python 包，**不能**替代 `pip install -e .` 的安装流程。
@@ -104,3 +127,4 @@ python "src\tests\test1.py"
 | `__init__.py`（各包目录下） | 是，用于把 `src` 子目录标成 Python 包 |
 | `pyproject.toml` | 使用 `pip install -e .` 时需要 |
 | `*.egg-info` | 安装时自动生成，不必长期保留，可不提交 Git |
+| `pip install -e` 的工作目录 | 必须是本目录 `customer-service-agent`（含 `pyproject.toml`），**不能**用仓库根目录 `my-rag-study` |
