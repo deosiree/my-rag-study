@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: customer-service-agent
+Version: 0.1.0
+Summary: Lesson demo: LangGraph customer-service agent (local src layout)
+Requires-Python: >=3.10
