@@ -15,11 +15,11 @@ cached_human_responses = ["你好","Q"]
 cached_response_index = 0
 config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 while True:
-    # try:
-    #     user = input("User (q/Q to quit): ")
-    # except:
-    user_content = cached_human_responses[cached_response_index]
-    cached_response_index += 1
+    try:
+        user_content = input("User (q/Q to quit): ")
+    except:
+        user_content = cached_human_responses[cached_response_index]
+        cached_response_index += 1
     print(f"User (q/Q to quit): {user_content}")
     if user_content in {"q", "Q"}:
         print("AI: Byebye")
