@@ -10,8 +10,7 @@ import uuid
 
 # 6.Use the graph
 
-cached_human_responses = ["你好", "计算111+111", "天空是什么颜色的", "你使用了什么模型？", "q"]
-# cached_human_responses = ["你好","Q"]
+cached_human_responses = ["你使用了什么模型？", "q"]
 cached_response_index = 0
 config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 while True:
@@ -24,12 +23,21 @@ while True:
     if user_content in {"q", "Q"}:
         print("AI: Byebye")
         break
-    output =  app.invoke(
+    output = None
+    for output in app.stream(
         {"messages": [HumanMessage(content=user_content)]},
         config=config,
-        stream_mode="values",
-    )
-    output["messages"][-1].pretty_print()
+        stream_mode="updates",
+    ):
+        # updates 模式：每项为 {节点名: 该节点写回的状态片段}，无顶层 "messages"
+        # 例如 intent_analyzer 只有 intent_data；chitchat/faq 才有 messages
+        for _node, patch in output.items():
+            msgs = patch.get("messages") if isinstance(patch, dict) else None
+            if msgs:
+                msgs[-1].pretty_print()
+
+    if output and "prompt" in output:
+        print("Done!")
 
 
 

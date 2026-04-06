@@ -29,3 +29,6 @@ Desktop.ini
 .env.*
 .env_*
 !.env.example
+
+# Local FAQ extraction data (not pushed)
+lessons/1.8 Conclusion/gen-faq-basedExtraction/src/data/AI/

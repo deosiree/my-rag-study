@@ -7,6 +7,7 @@ FilePath: \my-rag-study\lessons\1.8 Conclusion\customer-service-agent\src\nodes\
 Description: 澄清节点，使用澄清技术回答用户问题
 '''
 
+from config.models import default_llm
 from graph.state import CustomerServiceState
 from langchain_core.messages import AIMessage
 
@@ -16,5 +17,7 @@ def clarify_node(state: CustomerServiceState):
     description: 澄清节点，使用澄清技术回答用户问题
     return {CustomerServiceState}: 澄清结果
     """
-    result = AIMessage(content="这是一个澄清节点")
+    ai_message = AIMessage(content="这是一个澄清节点")
+    input_messages = state["messages"] + [ai_message]
+    result = default_llm.invoke(input_messages)
     return {"messages": [result]}# 返回消息
