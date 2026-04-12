@@ -5,7 +5,6 @@ return {CustomerServiceState}: 意图分析结果
 
 from config.models import structured_llm
 from graph.state import CustomerServiceState
-from schemas.intent import IntentSchema
 from langchain_core.messages import SystemMessage
 
 
