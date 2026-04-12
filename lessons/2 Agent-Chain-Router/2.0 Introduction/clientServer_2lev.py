@@ -18,6 +18,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph, add_messages
 from pydantic import Field, BaseModel
+from ipython import visualize_graph
 
 load_dotenv()
 
@@ -162,8 +163,14 @@ graph.add_edge("knowledge_base_high", END)
 graph.add_edge("human_handoff", END)
 
 app = graph.compile()
-display(Image(app.get_graph().draw_mermaid_png()))
-
+# display(Image(app.get_graph().draw_mermaid_png()))
+# 不使用图片，直接看文本
+# print(app.get_graph().draw_mermaid())
+# 只想看图的逻辑，不追求精美图片
+# app.get_graph().print_ascii()
+# 外部封装
+md_code = visualize_graph(app)
+print(md_code)
 
 if __name__ == "__main__":
     result = app.invoke({"messages": [HumanMessage(content="1+1=？")], "intent": None})
