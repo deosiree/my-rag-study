@@ -30,6 +30,9 @@ Desktop.ini
 .env.*
 .env_*
 !.env.example
+__pycache__/
+.langgraph_api/
+
 
 # Local FAQ extraction data (not pushed)
 lessons/1.8 Conclusion/gen-faq-basedExtraction/data/AI/
